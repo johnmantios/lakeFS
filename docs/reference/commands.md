@@ -1812,14 +1812,16 @@ lakectl diff <ref uri> [ref uri] [flags]
 
 
 ```
-lakectl docs [outfile] [flags]
+lakectl docs [flags]
 ```
 
 #### Options
 {:.no_toc}
 
 ```
-  -h, --help   help for docs
+      --format string   Output format (md markdown or man files) (default "md")
+  -h, --help            help for docs
+  -o, --output string   Output location (based on the format file or directory)
 ```
 
 
