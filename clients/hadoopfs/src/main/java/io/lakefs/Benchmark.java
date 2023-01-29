@@ -18,7 +18,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.RemoteIterator;
 import org.apache.http.util.Asserts;
 
-class Benchmark {
+public class Benchmark {
     private LakeFSFileSystem fs;
 
     public Benchmark(LakeFSFileSystem fs) {
