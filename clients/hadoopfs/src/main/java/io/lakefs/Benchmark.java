@@ -24,23 +24,20 @@ public class Benchmark {
     }
 
     public static void main(String[] args) throws IOException {
-        int total = 6;
-
-        // System.out.println(pathToRecursive("example-repo", 1, 10000));
-        // System.out.println(pathToRecursive("example-repo", 100, 10000));
-
-        // System.out.println(pathToRecursive("example-repo", 100, 10000));
-        // System.out.println(pathToRecursive("example-repo", 10000, 10000));
-        // System.out.println(pathToRecursive("example-repo", 100000, 100000));
+        int total = Integer.valueOf(args[0]);
+        int fileSize = Integer.valueOf(args[1]);
+        System.out.println("Initializing");
         Configuration conf = new Configuration();
         conf.set("fs.lakefs.access.key", System.getenv("LAKEFS_ACCESS_KEY_ID"));
         conf.set("fs.lakefs.secret.key", System.getenv("LAKEFS_SECRET_ACCESS_KEY"));
         conf.set("fs.lakefs.impl", "io.lakefs.LakeFSFileSystem");
         conf.set("fs.lakefs.endpoint", System.getenv("LAKEFS_ENDPOINT"));
         String repo = "example-repo";
+        System.out.println("Getting FS");
 
         LakeFSFileSystem fs = (LakeFSFileSystem) new Path("lakefs://" + repo + "/main").getFileSystem(conf);
-        new Benchmark(fs).fullFlow(repo, total, 10, 1);
+        System.out.println("Starting flow");
+        new Benchmark(fs).fullFlow(repo, total, fileSize, 1);
         // FSDataOutputStream os = fs.create(new Path("lakefs://" + repo +
         // "/main/luli.txt"));
         // os.writeChars("hewlllllo");
@@ -108,6 +105,7 @@ public class Benchmark {
                         e1.printStackTrace();
                     }
                 }
+                e.printStackTrace();
                 System.out.println("Failed to create file " + path);
             }
         });
