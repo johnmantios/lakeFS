@@ -35,12 +35,10 @@ class Benchmark {
         // System.out.println(pathToRecursive("example-repo", 10000, 10000));
         // System.out.println(pathToRecursive("example-repo", 100000, 100000));
         Configuration conf = new Configuration();
-        conf.set("fs.lakefs.access.key", "AKIAJE3TLC6RZINHRPPQ");
-        conf.set("fs.lakefs.secret.key", "JjGY1Ig8Mhe7sLtfE5lu5lcjx/3W+8ttvibDnKh4");
+        conf.set("fs.lakefs.access.key", System.getenv("LAKEFS_ACCESS_KEY_ID"));
+        conf.set("fs.lakefs.secret.key", System.getenv("LAKEFS_SECRET_ACCESS_KEY"));
         conf.set("fs.lakefs.impl", "io.lakefs.LakeFSFileSystem");
-        conf.set("fs.lakefs.endpoint", "http://localhost:8000/api/v1/");
-        conf.set("fs.s3a.access.key", "AKIA6HHRMQLJCWRZZYLM");
-        conf.set("fs.s3a.secret.key", "snjOnjbvDwpUdEKsnkCLl0Pyc76UinbMp562XZR9");
+        conf.set("fs.lakefs.endpoint", System.getenv("LAKEFS_ENDPOINT"));
         String repo = "example-repo";
 
         LakeFSFileSystem fs = (LakeFSFileSystem) new Path("lakefs://" + repo + "/main").getFileSystem(conf);
