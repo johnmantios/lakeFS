@@ -2,6 +2,8 @@ package io.lakefs;
 
 import io.lakefs.clients.api.*;
 import io.lakefs.clients.api.auth.HttpBasicAuth;
+import okhttp3.OkHttpClient;
+
 import org.apache.hadoop.conf.Configuration;
 
 import java.io.IOException;
@@ -17,6 +19,7 @@ public class LakeFSClient {
     private final StagingApi staging;
     private final RepositoriesApi repositories;
     private final BranchesApi branches;
+    private final CounterInterceptor interceptor;
 
     public LakeFSClient(String scheme, Configuration conf) throws IOException {
         String accessKey = FSConfiguration.get(conf, scheme, Constants.ACCESS_KEY_KEY_SUFFIX);
@@ -28,8 +31,10 @@ public class LakeFSClient {
         if (secretKey == null) {
             throw new IOException("Missing lakeFS secret key");
         }
-
-        ApiClient apiClient = io.lakefs.clients.api.Configuration.getDefaultApiClient();
+        interceptor = new CounterInterceptor();
+        OkHttpClient okHttpClient = new OkHttpClient.Builder().addInterceptor(interceptor).build();
+        ApiClient apiClient = new ApiClient(okHttpClient);
+        // ApiClient apiClient = io.lakefs.clients.api.Configuration.getDefaultApiClient();
         String endpoint = FSConfiguration.get(conf, scheme, Constants.ENDPOINT_KEY_SUFFIX, Constants.DEFAULT_CLIENT_ENDPOINT);
         if (endpoint.endsWith(Constants.SEPARATOR)) {
             endpoint = endpoint.substring(0, endpoint.length() - 1);
@@ -57,4 +62,8 @@ public class LakeFSClient {
     public RepositoriesApi getRepositories() { return repositories; }
 
     public BranchesApi getBranches() { return branches; }
+
+    public CounterInterceptor getInterceptor() {
+        return interceptor;
+    }
 }
