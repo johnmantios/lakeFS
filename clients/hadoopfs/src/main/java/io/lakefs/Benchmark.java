@@ -201,5 +201,6 @@ public class Benchmark {
                 System.out.println("Failed to delete file " + newPath);
             }
         });
+        resetAndPrintCounters();
     }
 }
