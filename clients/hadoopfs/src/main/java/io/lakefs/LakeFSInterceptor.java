@@ -23,7 +23,7 @@ class LakeFSInterceptor implements Interceptor {
         Request original = chain.request();
         String methodName = "unknown";
         for (StackTraceElement stackTrace : Thread.currentThread().getStackTrace()) {
-            if (stackTrace.getClass().getSimpleName() == "LakeFSFileSystem"
+            if (stackTrace.getClassName().equals(LakeFSFileSystem.class.getName())
                     && publicMethods.contains(stackTrace.getMethodName())) {
                 methodName = stackTrace.getMethodName();
                 break;
