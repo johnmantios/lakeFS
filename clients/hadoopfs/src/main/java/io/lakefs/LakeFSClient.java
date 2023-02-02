@@ -2,6 +2,9 @@ package io.lakefs;
 
 import io.lakefs.clients.api.*;
 import io.lakefs.clients.api.auth.HttpBasicAuth;
+import okhttp3.OkHttpClient;
+import okhttp3.OkHttpClient.Builder;
+
 import org.apache.hadoop.conf.Configuration;
 
 import java.io.IOException;
@@ -29,7 +32,8 @@ public class LakeFSClient {
             throw new IOException("Missing lakeFS secret key");
         }
 
-        ApiClient apiClient = io.lakefs.clients.api.Configuration.getDefaultApiClient();
+        
+        ApiClient apiClient = new ApiClient(new OkHttpClient(new Builder().addInterceptor(new LakeFSInterceptor())));
         String endpoint = FSConfiguration.get(conf, scheme, Constants.ENDPOINT_KEY_SUFFIX, Constants.DEFAULT_CLIENT_ENDPOINT);
         if (endpoint.endsWith(Constants.SEPARATOR)) {
             endpoint = endpoint.substring(0, endpoint.length() - 1);
