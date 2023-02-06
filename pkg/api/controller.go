@@ -3383,10 +3383,7 @@ func (c *Controller) MergeIntoBranch(w http.ResponseWriter, r *http.Request, bod
 		metadata,
 		StringValue(body.Strategy))
 
-	var (
-		hookAbortErr *graveler.HookAbortError
-		zero         int
-	)
+	var hookAbortErr *graveler.HookAbortError
 	switch {
 	case errors.As(err, &hookAbortErr):
 		c.Logger.WithError(err).WithField("run_id", hookAbortErr.RunID).Warn("aborted by hooks")
@@ -3395,7 +3392,6 @@ func (c *Controller) MergeIntoBranch(w http.ResponseWriter, r *http.Request, bod
 	case errors.Is(err, graveler.ErrConflictFound):
 		writeResponse(w, r, http.StatusConflict, MergeResult{
 			Reference: reference,
-			Summary:   &MergeResultSummary{Added: &zero, Changed: &zero, Conflict: &zero, Removed: &zero},
 		})
 		return
 	}
@@ -3404,7 +3400,6 @@ func (c *Controller) MergeIntoBranch(w http.ResponseWriter, r *http.Request, bod
 	}
 	writeResponse(w, r, http.StatusOK, MergeResult{
 		Reference: reference,
-		Summary:   &MergeResultSummary{Added: &zero, Changed: &zero, Conflict: &zero, Removed: &zero},
 	})
 }
 
