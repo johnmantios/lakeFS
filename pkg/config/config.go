@@ -91,8 +91,10 @@ type Config struct {
 	ListenAddress string `mapstructure:"listen_address"`
 
 	Actions struct {
-		// ActionsEnabled set to false will block any hook execution
+		// Enabled set to false will block any hook execution
 		Enabled bool `mapstructure:"enabled"`
+		// EnabledTypes list of specific action types that will be supported - empty enables all.
+		EnabledHookTypes []string `mapstructure:"enabled_hook_types"`
 	}
 
 	Logging struct {

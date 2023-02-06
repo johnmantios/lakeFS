@@ -153,7 +153,9 @@ func setupHandlerWithWalkerFactory(t testing.TB, factory catalog.WalkerFactory) 
 		catalog.NewActionsOutputWriter(c.BlockAdapter),
 		idGen,
 		collector,
-		true,
+		actions.Config{
+			Enabled: true,
+		},
 	)
 
 	c.SetHooksHandler(actionsService)

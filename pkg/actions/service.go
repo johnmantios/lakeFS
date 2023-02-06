@@ -18,6 +18,7 @@ import (
 	"github.com/treeverse/lakefs/pkg/kv"
 	"github.com/treeverse/lakefs/pkg/logging"
 	"github.com/treeverse/lakefs/pkg/stats"
+	"golang.org/x/exp/slices"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -31,9 +32,15 @@ const (
 )
 
 var (
-	ErrNotFound = errors.New("not found")
-	ErrNilValue = errors.New("nil value")
+	ErrNotFound         = errors.New("not found")
+	ErrNilValue         = errors.New("nil value")
+	ErrHookTypeDisabled = errors.New("hook type disabled")
 )
+
+type Config struct {
+	Enabled          bool
+	EnabledHookTypes []string
+}
 
 // StoreService is an implementation of actions.Service that saves
 // the run data to the blockstore and to the actions.Store (which is a
@@ -47,9 +54,8 @@ type StoreService struct {
 	cancel   context.CancelFunc
 	wg       sync.WaitGroup
 	stats    stats.Collector
-	runHooks bool
-
 	endpoint *http.Server
+	config   Config
 }
 
 type Task struct {
@@ -204,18 +210,18 @@ type Service interface {
 	graveler.HooksHandler
 }
 
-func NewService(ctx context.Context, store Store, source Source, writer OutputWriter, idGen IDGenerator, stats stats.Collector, runHooks bool) *StoreService {
+func NewService(ctx context.Context, store Store, source Source, writer OutputWriter, idGen IDGenerator, stats stats.Collector, cfg Config) *StoreService {
 	ctx, cancel := context.WithCancel(ctx)
 	return &StoreService{
-		Store:    store,
-		Source:   source,
-		Writer:   writer,
-		ctx:      ctx,
-		idGen:    idGen,
-		cancel:   cancel,
-		wg:       sync.WaitGroup{},
-		stats:    stats,
-		runHooks: runHooks,
+		Store:  store,
+		Source: source,
+		Writer: writer,
+		ctx:    ctx,
+		idGen:  idGen,
+		cancel: cancel,
+		wg:     sync.WaitGroup{},
+		stats:  stats,
+		config: cfg,
 	}
 }
 
@@ -255,7 +261,7 @@ func (s *StoreService) asyncRun(ctx context.Context, record graveler.HookRecord)
 
 // Run load and run actions based on the event information
 func (s *StoreService) Run(ctx context.Context, record graveler.HookRecord) error {
-	if !s.runHooks {
+	if !s.config.Enabled {
 		logging.FromContext(ctx).WithField("record", record).Debug("Hooks are disabled, skipping hooks execution")
 		return nil
 	}
@@ -268,6 +274,11 @@ func (s *StoreService) Run(ctx context.Context, record graveler.HookRecord) erro
 	logging.FromContext(ctx).WithFields(logging.Fields{"record": record, "spec": spec}).Debug("Filtering actions")
 	actions, err := s.loadMatchedActions(ctx, record, spec)
 	if err != nil || len(actions) == 0 {
+		return err
+	}
+
+	// verify actions
+	if err := s.verifyActionsHookTypes(actions); err != nil {
 		return err
 	}
 
@@ -294,6 +305,25 @@ func (s *StoreService) loadMatchedActions(ctx context.Context, record graveler.H
 		return nil, err
 	}
 	return MatchedActions(actions, spec)
+}
+
+func (s *StoreService) verifyActionsHookTypes(actions []*Action) error {
+	if len(s.config.EnabledHookTypes) == 0 {
+		return nil
+	}
+
+	uniqueHookTypes := make(map[string]struct{})
+	for _, action := range actions {
+		for _, hook := range action.Hooks {
+			uniqueHookTypes[string(hook.Type)] = struct{}{}
+		}
+	}
+	for hookType := range uniqueHookTypes {
+		if slices.Contains(s.config.EnabledHookTypes, hookType) {
+			return fmt.Errorf("%s: %w", hookType, ErrHookTypeDisabled)
+		}
+	}
+	return nil
 }
 
 func (s *StoreService) allocateTasks(runID string, actions []*Action) ([][]*Task, error) {

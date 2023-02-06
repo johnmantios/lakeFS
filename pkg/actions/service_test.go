@@ -50,18 +50,17 @@ func (c *ActionStatsMockCollector) CollectEvents(ev stats.Event, count uint64) {
 	c.Hits[ev.Name] += int(count)
 }
 
-func (c *ActionStatsMockCollector) CollectMetadata(accountMetadata *stats.Metadata) {
-}
-func (c *ActionStatsMockCollector) SetInstallationID(_ string)              {}
-func (c *ActionStatsMockCollector) CollectCommPrefs(_, _ string, _, _ bool) {}
-func (c *ActionStatsMockCollector) Close()                                  {}
+func (c *ActionStatsMockCollector) CollectMetadata(accountMetadata *stats.Metadata) {}
+func (c *ActionStatsMockCollector) SetInstallationID(_ string)                      {}
+func (c *ActionStatsMockCollector) CollectCommPrefs(_, _ string, _, _ bool)         {}
+func (c *ActionStatsMockCollector) Close()                                          {}
 
-type getService func(t *testing.T, ctx context.Context, source actions.Source, writer actions.OutputWriter, stats stats.Collector, runHooks bool) actions.Service
+type getService func(t *testing.T, ctx context.Context, source actions.Source, writer actions.OutputWriter, stats stats.Collector, cfg actions.Config) actions.Service
 
-func GetKVService(t *testing.T, ctx context.Context, source actions.Source, writer actions.OutputWriter, stats stats.Collector, runHooks bool) actions.Service {
+func GetKVService(t *testing.T, ctx context.Context, source actions.Source, writer actions.OutputWriter, stats stats.Collector, cfg actions.Config) actions.Service {
 	t.Helper()
 	kvStore := kvtest.GetStore(ctx, t)
-	return actions.NewService(ctx, actions.NewActionsKVStore(kv.StoreMessage{Store: kvStore}), source, writer, &actions.DecreasingIDGenerator{}, stats, runHooks)
+	return actions.NewService(ctx, actions.NewActionsKVStore(kv.StoreMessage{Store: kvStore}), source, writer, &actions.DecreasingIDGenerator{}, stats, cfg)
 }
 
 func TestServiceRun(t *testing.T) {
@@ -171,7 +170,9 @@ hooks:
 
 			// run actions
 			now := time.Now()
-			actionsService := tt.actionsService(t, ctx, testSource, testOutputWriter, &mockStatsCollector, true)
+			actionsService := tt.actionsService(t, ctx, testSource, testOutputWriter, &mockStatsCollector, actions.Config{
+				Enabled: true,
+			})
 			defer actionsService.Stop()
 
 			err := actionsService.Run(ctx, record)
@@ -273,7 +274,9 @@ func TestDisableHooksRun(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// run actions
 			mockStatsCollector := NewActionStatsMockCollector()
-			actionsService := tt.actionsService(t, ctx, testSource, testOutputWriter, &mockStatsCollector, false)
+			actionsService := tt.actionsService(t, ctx, testSource, testOutputWriter, &mockStatsCollector, actions.Config{
+				Enabled: false,
+			})
 			defer actionsService.Stop()
 
 			err := actionsService.Run(ctx, record)
@@ -331,7 +334,9 @@ hooks:
 
 			// run actions
 			mockStatsCollector := NewActionStatsMockCollector()
-			actionsService := tt.actionsService(t, ctx, testSource, testOutputWriter, &mockStatsCollector, true)
+			actionsService := tt.actionsService(t, ctx, testSource, testOutputWriter, &mockStatsCollector, actions.Config{
+				Enabled: true,
+			})
 			defer actionsService.Stop()
 
 			require.Error(t, actionsService.Run(ctx, record))
@@ -464,7 +469,9 @@ func TestNewRunID(t *testing.T) {
 	testOutputWriter, ctrl, _, _ := setupTest(t)
 	testSource := mock.NewMockSource(ctrl)
 	mockStatsCollector := NewActionStatsMockCollector()
-	actionsService := GetKVService(t, ctx, testSource, testOutputWriter, &mockStatsCollector, false)
+	actionsService := GetKVService(t, ctx, testSource, testOutputWriter, &mockStatsCollector, actions.Config{
+		Enabled: false,
+	})
 
 	id1 := actionsService.NewRunID()
 	time.Sleep(2 * time.Second)
