@@ -5072,11 +5072,6 @@ components:
       - results
       type: object
     MergeResultSummary:
-      example:
-        removed: 6
-        added: 0
-        changed: 1
-        conflict: 5
       properties:
         added:
           deprecated: true
@@ -5097,15 +5092,8 @@ components:
       type: object
     MergeResult:
       example:
-        summary:
-          removed: 6
-          added: 0
-          changed: 1
-          conflict: 5
         reference: reference
       properties:
-        summary:
-          $ref: '#/components/schemas/MergeResultSummary'
         reference:
           type: string
       required:

@@ -201,8 +201,6 @@ components:
       required:
         - reference
       properties:
-        summary:
-          $ref: "#/components/schemas/MergeResultSummary"
         reference:
           type: string
 
